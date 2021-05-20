@@ -1,2 +1,2 @@
 # papercut_alerts
-prototype alerts for papercut, utilising it's server api.
+Prototype alerts for papercut, utilising its server API.
