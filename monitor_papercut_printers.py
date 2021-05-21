@@ -219,8 +219,6 @@ try:
     # we then save the current state, overwriting the previous state.
     writeJsonFile(incoming_data, state_file)
 
-    unknown()
-
 except:
     #e = sys.exc_info()[0]
     e = traceback.format_exc()
