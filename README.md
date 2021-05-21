@@ -12,4 +12,9 @@ Then in a new console, navigate to the location of your script and run:
 
 This runs python's SimpleHTTPServer on localhost:8000, using the ./data directory as it's DocumentRoot.
 
-Don't forget to set it back to False once you've finished testing.
+If emailmessages is set to `True` and you're using devMode (also set to `True`), then open another console and run:
+	python -m smtpd -c DebuggingServer -n localhost:1025
+
+This spawns a test email server, so you can test sending alerts.
+
+Don't forget to set `devMode` back to `False` once you've finished testing.
