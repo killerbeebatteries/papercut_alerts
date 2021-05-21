@@ -12,15 +12,13 @@
 
 
 # TODO:
-#   - track state
 #   - monitoring alerts
-#   - logging
-#   - expired events
 
 import requests
 import os
 import sys
 import json
+import logging
 
 # set dev mode if you don't have access to the api url.
 devMode = True
@@ -40,11 +38,14 @@ def readJsonFile(input_file):
 def tellSomeone(msg, printer_list):
 
     for printer in printer_list:
-        print(msg)
-        print("Printer details:\n {}".format(printer))
+        log_msg = "{}\n Printer details:\n {}".format(msg, printer)
+        print(log_msg)
+        logging.info(log_msg)
 
 def metaMonitoringAlert(error):
-    print("There appears to be a problem with running the monitoring script:\n {}".format(error))
+    log_msg = "There appears to be a problem with running the monitoring script:\n {}".format(error)
+    print(log_msg)
+    logging.error(log_msg)
 
 if devMode:
     papercut_api_url = "http://localhost:8000/data/sample_data.json"
@@ -75,6 +76,22 @@ try:
             print ("Creating directory: " + full_path)
             os.mkdir(full_path)
 
+    # logging
+    log_dir = os.path.join(os.getcwd(), 'logs')
+    log_file = os.path.join(log_dir, 'loggity.log')
+    log_line_format = '%(asctime)s - %(levelname)s - %(message)s'
+    log_date_format = '%Y/%m/%d %H:%M:%S'
+
+    logging.root.handlers = []
+    logging.basicConfig(
+        format=log_line_format,
+        datefmt = log_date_format,
+        handlers = [
+        logging.FileHandler(log_file),
+        logging.StreamHandler()
+        ],
+        level=logging.INFO
+    )
 
     # if the state file exists, load it into a variable.
     if os.path.isfile(state_file):
@@ -123,10 +140,11 @@ try:
                 tellSomeone(msg, [previous_printer])
 
     else:
-        print("No previous state file exists, so we'll create one and exit.")
+        msg = "No previous state file exists, so we'll create one."
+        logging.error(msg)
         writeJsonFile(incoming_data, state_file)
         # assume we haven't alerted for the current list of erroring printers. Send now.
-        msg = "New printer errror found."
+        msg = "New printer error(s) found."
         tellSomeone(msg, current_erroring_printers)
 
     # REMOVE: testing stale printer data functionality.
