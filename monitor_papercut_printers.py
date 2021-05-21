@@ -9,22 +9,46 @@
 # Resources:
 #   - https://www.papercut.com/kb/Main/TopTipsForUsingThePublicWebServicesAPI#using-the-api
 #   - https://www.papercut.com/support/resources/manuals/ng-mf/common/topics/tools-monitor-system-health-api-overview.html
-
-
-# TODO:
-#   - monitoring alerts
+#   - https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook
 
 import requests
 import os
 import sys
 import json
 import logging
+import traceback
+
+script_name = os.path.basename(__file__)
 
 # set dev mode if you don't have access to the api url.
 devMode = True
 
+# enable/disable Microsoft Teams alerts.
+teamsMessages = False
+# Teams webhook url.
+teams_webhook_url = "Please update."
+
+# enable/disable email alerts.
+emailMessages = True
+
+email_recipients = [ "user1@example.com", "user2@example.com" ]
+email_sender = "friendly_monitoring@example.com"
+
 state_file = "./data/state.json"
 sub_dirs   = [ "logs", "data" ]
+
+if devMode:
+    papercut_api_url = "http://localhost:8000/sample_data.json"
+    smtp_host = "localhost"
+    smtp_port = 1025
+
+else:
+    # update to use your papercut server api url for retrieving the json file.
+    papercut_api_url = "http://server:port/api_uri"
+    # update to use your local email relay.
+    smtp_host = "mail.example.com"
+    smtp_port = 25
+
 
 def writeJsonFile(data, output_file):
     print("Writing to file: " + output_file)
@@ -42,17 +66,59 @@ def tellSomeone(msg, printer_list):
         print(log_msg)
         logging.info(log_msg)
 
+        if teamsMessages:
+            sendTeamsMessage(log_msg)
+            
+        if emailMessages:
+            subject = "Monitor alert: {} has status of {}".format(printer["name"], printer["status"])
+            sendEmail(log_msg, email_sender, email_recipients, subject, smtp_host, smtp_port)
+
 def metaMonitoringAlert(error):
     log_msg = "There appears to be a problem with running the monitoring script:\n {}".format(error)
     print(log_msg)
     logging.error(log_msg)
 
-if devMode:
-    papercut_api_url = "http://localhost:8000/data/sample_data.json"
+    if teamsMessages:
+        sendTeamsMessage(log_msg)
 
-else:
-    # update to use your papercut server api url for retrieving the json file.
-    papercut_api_url = "http://server:port/api_uri"
+    if emailMessages:
+        subject = "Monitor Alert: Script {} has triggered a meta monitoring error.".format(script_name)
+        sendEmail(log_msg, email_sender, email_recipients, subject, smtp_host, smtp_port)
+
+def sendTeamsMessage(msg):
+    """
+    Microsoft Teams API Message.
+    Borrowed from: https://stackoverflow.com/questions/59371631/send-automated-messages-to-microsoft-teams-using-python
+    """
+
+    import pymsteams
+
+    try:
+        myTeamsMessage = pymsteams.connectorcard(teams_webhook_url)
+        myTeamsMessage.text(msg)
+        myTeamsMessage.send()
+    except:
+        e = sys.exc_info()[0]
+        logging.error(e)
+
+def sendEmail(msg, sender, recipients, subject, server, port):
+    # helpful bit of code provided by elmato.
+    import smtplib
+    from email.mime.text import MIMEText
+
+    email_msg = MIMEText(msg)
+
+    email_msg["Subject"] = subject
+    email_msg["From"]    = sender
+    email_msg["To"]      = ", ".join(recipients)
+
+    try:
+        with smtplib.SMTP(server, port) as s:
+            logging.info('Sending email to {}'.format(';'.join(recipients)))
+            s.sendmail(sender, recipients, email_msg.as_string())
+    except smtplib.SMTPException as e:
+        logging.error(e)
+
 
 # try to get data from papercut api
 # if this fails, provide a meta alert, then exit.
@@ -153,7 +219,10 @@ try:
     # we then save the current state, overwriting the previous state.
     writeJsonFile(incoming_data, state_file)
 
+    unknown()
+
 except:
-    e = sys.exc_info()[0]
+    #e = sys.exc_info()[0]
+    e = traceback.format_exc()
     metaMonitoringAlert(e)
     raise
