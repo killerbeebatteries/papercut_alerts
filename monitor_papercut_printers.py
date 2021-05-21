@@ -36,8 +36,11 @@ def readJsonFile(input_file):
     with open(input_file) as json_file:
         return json.load(json_file)
 
-def tellSomeone(error):
-    print("It appears we have an error with:\n {}".format(error))
+def tellSomeone(msg, printer_list):
+
+    for printer in printer_list:
+        print(msg)
+        print("Printer details:\n {}".format(printer))
 
 def metaMonitoringAlert(error):
     print("There appears to be a problem with running the monitoring script:\n {}".format(error))
@@ -61,7 +64,8 @@ except requests.exceptions.RequestException as e:
 try:
 
     incoming_data = json.loads(r.content)
-    print(incoming_data)
+    current_erroring_printers  = incoming_data["printers"]["inError"]
+    #print(incoming_data)
 
     # create our data and log directories if they don't exist
     for sub_dir in sub_dirs:
@@ -74,30 +78,42 @@ try:
     # if the state file exists, load it into a variable.
     if os.path.isfile(state_file):
         previous_data = readJsonFile(state_file)
-        print(previous_data)
-
-        current_erroring_printers  = incoming_data["printers"]["inError"]
         previous_erroring_printers = previous_data["printers"]["inError"]
+        #print(previous_data)
+
 
         for current_printer in current_erroring_printers:
             name   = current_printer["name"]
             status = current_printer["status"]
+            printerFound = False
+            printerStatusMatch = False
 
             # if the erroring printer exists in our state file and the status error matches, assume we've already
             # alerted for this printer error previously.
-            if name in previous_erroring_printers:
-                if status == previous_erroring_printers[name]["status"]:
-                    continue
-                else:
-                    tellSomeone(current_printer)
+            for previous_printer in previous_erroring_printers:
+                if name == previous_printer["name"]:
+                    printerFound = True
+                    if status == previous_printer["status"]:
+                        printerStatusMatch = True
+                        print("Printer exists: " + name)
+                        continue
+
             # if the printer isn't in the previous erroring printer list, we can assume it's a new error.
-            else:
-                tellSomeone(current_printer)
+            if not printerFound:
+                msg = "It appears we have a printer with a new error."
+                tellSomeone(msg, [current_printer])
+
+            # report error state change
+            if not printerStatusMatch:
+                msg = "It appears the error state has changed."
+                tellSomeone(msg, [current_printer])
 
     else:
         print("No previous state file exists, so we'll create one and exit.")
         writeJsonFile(incoming_data, state_file)
-        raise SystemExit()
+        # assume we haven't alerted for the current list of erroring printers. Send now.
+        msg = "New printer errror found."
+        tellSomeone(msg, current_erroring_printers)
 
     # we then save the current state, overwriting the previous state.
     writeJsonFile(incoming_data, state_file)
