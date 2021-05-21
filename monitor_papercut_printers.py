@@ -15,6 +15,7 @@
 #   - track state
 #   - monitoring alerts
 #   - logging
+#   - expired events
 
 import requests
 import os
@@ -29,7 +30,7 @@ sub_dirs   = [ "logs", "data" ]
 
 def writeJsonFile(data, output_file):
     print("Writing to file: " + output_file)
-    open(output_file, 'w').write(json.dumps(data))
+    open(output_file, 'w').write(json.dumps(data, sort_keys=True, indent=4))
 
 def readJsonFile(input_file):
     print("Reading file: " + input_file)
@@ -108,12 +109,28 @@ try:
                 msg = "It appears the error state has changed."
                 tellSomeone(msg, [current_printer])
 
+        # see if we have any printer records in our previous erroring printer list that are not in our current
+        # erroring list.
+        for previous_printer in previous_erroring_printers:
+            printerStaleRecord = True
+
+            for current_printer in current_erroring_printers:
+                if current_printer["name"] == previous_printer["name"]:
+                    printerStaleRecord = False
+
+            if printerStaleRecord:
+                msg = "It looks like a printer that was listed as having errors previously has been removed from the list."
+                tellSomeone(msg, [previous_printer])
+
     else:
         print("No previous state file exists, so we'll create one and exit.")
         writeJsonFile(incoming_data, state_file)
         # assume we haven't alerted for the current list of erroring printers. Send now.
         msg = "New printer errror found."
         tellSomeone(msg, current_erroring_printers)
+
+    # REMOVE: testing stale printer data functionality.
+    #incoming_data["printers"]["inError"].append({"name": "org1-anotherprinter", "status": "OFFLINE"})
 
     # we then save the current state, overwriting the previous state.
     writeJsonFile(incoming_data, state_file)
