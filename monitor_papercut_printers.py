@@ -34,8 +34,12 @@ emailMessages = True
 email_recipients = [ "user1@example.com", "user2@example.com" ]
 email_sender = "friendly_monitoring@example.com"
 
-state_file = "./data/state.json"
-sub_dirs   = [ "logs", "data" ]
+data_path = "./data"
+log_path = "./logs"
+log_filename = "loggity.log"
+state_filename = "state.json"
+state_file = os.path.join(data_path, state_filename)
+required_paths = [ data_path, log_path ]
 
 if devMode:
     papercut_api_url = "http://localhost:8000/sample_data.json"
@@ -136,15 +140,13 @@ try:
     #print(incoming_data)
 
     # create our data and log directories if they don't exist
-    for sub_dir in sub_dirs:
-        if not os.path.isdir(sub_dir):
-            full_path = os.getcwd() + "/" + sub_dir
-            print ("Creating directory: " + full_path)
-            os.mkdir(full_path)
+    for path in required_paths:
+        if not os.path.isdir(path):
+            print ("Creating directory: " + path)
+            os.mkdir(path)
 
     # logging
-    log_dir = os.path.join(os.getcwd(), 'logs')
-    log_file = os.path.join(log_dir, 'loggity.log')
+    log_file = os.path.join(log_path, log_filename)
     log_line_format = '%(asctime)s - %(levelname)s - %(message)s'
     log_date_format = '%Y/%m/%d %H:%M:%S'
 
