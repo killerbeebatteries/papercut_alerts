@@ -1,0 +1,26 @@
+{
+    "printers": {
+        "inError": [
+            {
+                "name": "org1-Printer2-(Colour)",
+                "status": "OFFLINE"
+            },
+            {
+                "name": "org1-Printer3-(Colour)",
+                "status": "OFFLINE"
+            },
+            {
+                "name": "org1-ps2EpsonR3000",
+                "status": "OFFLINE"
+            },
+            {
+                "name": "org1-print1Copier-(Mono)",
+                "status": "OFFLINE"
+            },
+            {
+                "name": "org1-ps2CanonPRO1000",
+                "status": "OFFLINE"
+            }
+        ]
+    }
+}
