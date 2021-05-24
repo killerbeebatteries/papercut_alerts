@@ -28,6 +28,9 @@ teamsMessages = False
 # Teams webhook url.
 teams_webhook_url = "Please update."
 
+if teamsMessages:
+    import pymsteams
+
 # enable/disable email alerts.
 emailMessages = True
 
@@ -94,8 +97,6 @@ def sendTeamsMessage(msg):
     Microsoft Teams API Message.
     Borrowed from: https://stackoverflow.com/questions/59371631/send-automated-messages-to-microsoft-teams-using-python
     """
-
-    import pymsteams
 
     try:
         myTeamsMessage = pymsteams.connectorcard(teams_webhook_url)
