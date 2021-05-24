@@ -1,5 +1,5 @@
 # papercut_alerts
-prototype alerts for papercut, utilising it's server api.
+Prototype alerts for papercut, utilising its server API.
 
 ***NOTE:*** This script is being used as part of a learning process, so it's likely not using the design pattern intented from papercut. If you're looking for python examples, please read the papercut doco on their website. Please don't send the PEP8 police after me.
 
@@ -18,3 +18,4 @@ If emailmessages is set to `True` and you're using devMode (also set to `True`),
 This spawns a test email server, so you can test sending alerts.
 
 Don't forget to set `devMode` back to `False` once you've finished testing.
+=======
