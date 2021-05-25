@@ -67,18 +67,21 @@ def readJsonFile(input_file):
         return json.load(json_file)
 
 def tellSomeone(msg, printer_list):
+    log_msg = "{}\n Printer details:\n {}".format(msg, "\n".join(map(str, printer_list)))
 
-    for printer in printer_list:
-        log_msg = "{}\n Printer details:\n {}".format(msg, printer)
-        print(log_msg)
-        logging.info(log_msg)
+    print(log_msg)
+    logging.info(log_msg)
 
-        if teamsMessages:
-            sendTeamsMessage(log_msg)
+    if teamsMessages:
+        sendTeamsMessage(log_msg)
             
-        if emailMessages:
+    if emailMessages:
+        if len(printer_list) > 1:
+            subject = "Monitor alert: Multiple printers with errors."
+        else:
             subject = "Monitor alert: {} has status of {}".format(printer["name"], printer["status"])
-            sendEmail(log_msg, email_sender, email_recipients, subject, smtp_host, smtp_port)
+
+        sendEmail(log_msg, email_sender, email_recipients, subject, smtp_host, smtp_port)
 
 def metaMonitoringAlert(error):
     log_msg = "There appears to be a problem with running the monitoring script:\n {}".format(error)
